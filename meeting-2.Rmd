@@ -1,0 +1,76 @@
+---
+title: "Meeting 2"
+author: "Rui Li"
+date: "2/22/2021"
+output: html_document
+---
+
+**Require packages**
+```{r message = FALSE, warning=FALSE, error=FALSE}
+library(readr)
+library(utils)
+library(dplyr)
+library(ggplot2)
+library(maps)
+library(stringr)
+library(readr)
+library(tidyverse)
+library(readxl)
+library(plotly)
+library(MASS)
+library(kableExtra)
+library(broom)
+library(stargazer)
+library(ggfortify)
+```
+
+**Data Cleaning**
+```{r}
+#Import covid-19 data
+jhu_full_data <- read_csv("datasets/jhu_full_data.csv")%>%
+  rename(Date="date")%>%
+  mutate(Date=as.Date(Date,format="%d/%m/%y"))
+#Import location data
+population <- read_csv("datasets/jhu_population.csv")%>%
+  as.data.frame%>%
+  dplyr::select(location, population)
+
+#Add population column and scale columns
+mydata = left_join(jhu_full_data,population,by="location")%>%
+  mutate(new_cases_per = new_cases/population*100000)%>%
+  mutate(new_deaths_per = new_deaths/population*100000)%>%
+  mutate(total_cases_per = total_cases/population*100000)%>%
+  mutate(total_deaths_per = total_deaths/population*100000)%>%
+  mutate(weekly_cases_per = weekly_cases/population*100000)%>%
+  mutate(weekly_deaths_per = weekly_deaths/population*100000)%>%
+  mutate(biweekly_cases_per = biweekly_cases/population*100000)%>%
+  mutate(biweekly_deaths_per = biweekly_deaths/population*100000)
+
+#Split Taining and Testing Dataset
+data.2021 = mydata%>%filter(Date>=as.Date("2021-01-01"))
+data.2020 = mydata%>%filter(Date<as.Date("2021-01-01"))
+```
+
+**Model on Sub Data**
+```{r}
+data.train = data.2020%>%filter(location=="United Kingdom")
+data.test = data.2021%>%filter(location=="United Kingdom")
+ts1=ts(data.train$new_cases,frequency = 336,start = c(2020,01,31))
+ts2=ts(data.train$new_deaths,frequency = 336,start = c(2020,01,31))
+ts3=ts(data.train$weekly_cases,frequency = 336,start = c(2020,01,31))
+ts4=ts(data.train$weekly_deaths,frequency = 336,start = c(2020,01,31))
+
+ggplot(data.train, aes(as.numeric(Date), new_cases)) +
+  geom_line()
+
+ggplot(data.train, aes(as.numeric(Date), new_deaths)) +
+  geom_line()
+
+ggplot(data.train, aes(as.numeric(Date), weekly_cases)) +
+  geom_line()
+
+ggplot(data.train, aes(as.numeric(Date), weekly_deaths)) +
+  geom_line()
+```
+
+

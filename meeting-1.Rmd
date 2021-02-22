@@ -1,0 +1,59 @@
+---
+title: "Meeting 1"
+author: "Rui Li"
+date: "2/10/2021"
+output: html_document
+---
+
+**Require packages**
+```{r message = FALSE, warning=FALSE, error=FALSE}
+library(utils)
+library(dplyr)
+library(ggplot2)
+library(maps)
+library(stringr)
+library(readr)
+library(tidyverse)
+library(readxl)
+library(plotly)
+library(MASS)
+library(kableExtra)
+library(broom)
+library(stargazer)
+library(ggfortify)
+```
+
+**Cleaning Data**
+```{r message = FALSE, warning=FALSE, error=FALSE}
+#read the Dataset sheet into “R”. The dataset will be called "data".
+data <- read.csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv", na.strings = "", fileEncoding = "UTF-8-BOM")
+
+#library("dplyr") require "dplyr" package for the use of %>%
+covid.data = data %>%
+  rename(Date="dateRep") %>%
+  rename(Region="countriesAndTerritories") %>%
+  mutate(Date=as.Date(Date,format="%d/%m/%y"))%>% 
+  mutate(Region = str_replace_all(Region, "_", " "))
+```
+
+```{r}
+#United Kingdom Data
+subdata = covid.data[covid.data$Region=="United Kingdom",]
+#Remove starting zero cases/deaths rows
+subdata = subdata[11:53,]
+```
+
+```{r}
+ts1=ts(rev(subdata$cases_weekly),frequency = 52,start = c(2020,6))
+ts2=ts(rev(subdata$deaths_weekly),frequency = 52,start = c(2020,6))
+ts1
+ts2
+plot(ts1)
+plot(ts2)
+
+sub=arrange(subdata, year_week)
+sub$'week'=c(1:nrow(sub))
+ggplot(sub, aes(as.numeric(year_week), cases_weekly)) +
+  geom_line()
+```
+
